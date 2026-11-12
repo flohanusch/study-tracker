@@ -11,6 +11,21 @@
     <h1>Study Tracker</h1>
   </header>
   <main>
+    <section id="log-section">
+      <h2>Log time</h2>
+      <form id="log-form">
+        <label>
+          Date
+          <input type="date" id="log-date" required>
+        </label>
+        <label>
+          Minutes
+          <input type="number" id="log-minutes" min="1" max="1440" step="1" required>
+        </label>
+        <button type="submit">Add</button>
+      </form>
+      <ul id="sessions"></ul>
+    </section>
     <section id="heatmap-section">
       <h2>Activity</h2>
       <div id="heatmap"></div>

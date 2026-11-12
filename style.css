@@ -4,3 +4,40 @@ body {
   margin: 0 auto;
   padding: 24px 16px;
 }
+
+/* ---------- Log time ---------- */
+
+#log-form {
+  display: flex;
+  flex-wrap: wrap; /* fields move onto new lines on narrow screens */
+  gap: 12px;
+  align-items: flex-end;
+}
+
+#log-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9rem;
+}
+
+#log-form input,
+#log-form button {
+  font: inherit;
+  padding: 6px 10px;
+}
+
+#sessions {
+  list-style: none;
+  padding: 0;
+  margin-top: 16px;
+}
+
+#sessions li {
+  padding: 6px 0;
+  border-bottom: 1px solid #ddd;
+}
+
+#sessions li.empty {
+  color: #777;
+}
