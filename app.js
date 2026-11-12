@@ -252,11 +252,69 @@ function buildStat(value, label) {
 const tooltip = document.getElementById("heatmap-tooltip");
 const tooltipDate = document.getElementById("tooltip-date");
 const tooltipTime = document.getElementById("tooltip-time");
+const tooltipClasses = document.getElementById("tooltip-classes");
+
+// Minutes per class on one date, most first, e.g.
+// [{ key, name: "Maths", color: "#3b82f6", minutes: 90 }, ...]
+function classBreakdown(dateStr) {
+  // 1. Add up minutes per group: a class id, "deleted" or "none".
+  const groups = {};
+  for (const session of data.sessions) {
+    if (session.date !== dateStr) continue; // skip other days
+
+    let key = "none"; // no class (or an old session without classId)
+    if (session.classId) {
+      key = findClass(session.classId) ? session.classId : "deleted";
+    }
+    groups[key] = (groups[key] || 0) + session.minutes;
+  }
+
+  // 2. Turn { key: minutes } into a list of rows with a name and colour.
+  // Object.entries gives [[key, minutes], [key, minutes], ...].
+  const rows = Object.entries(groups).map(([key, minutes]) => {
+    if (key === "none") return { key, name: "No class", color: null, minutes };
+    if (key === "deleted") return { key, name: "Deleted class", color: null, minutes };
+    const cls = findClass(key);
+    return { key, name: cls.name, color: cls.color, minutes };
+  });
+
+  // 3. Most minutes first. Without the compare function, sort() would
+  // compare as text ("100" before "30").
+  return rows.sort((a, b) => b.minutes - a.minutes);
+}
 
 function showTooltip(cell) {
   const minutes = Number(cell.dataset.minutes); // data-* values are text
   tooltipDate.textContent = formatDate(cell.dataset.date);
   tooltipTime.textContent = minutes > 0 ? formatMinutes(minutes) : "Nothing logged";
+
+  // Per-class lines. Skipped if the only group is "No class",
+  // because that line would just repeat the total.
+  tooltipClasses.innerHTML = ""; // clear old lines (no user text involved)
+  const rows = minutes > 0 ? classBreakdown(cell.dataset.date) : [];
+  const onlyNoClass = rows.length === 1 && rows[0].key === "none";
+  if (!onlyNoClass) {
+    for (const row of rows) {
+      const li = document.createElement("li");
+
+      const name = document.createElement("span");
+      name.className = "tooltip-class-name";
+      const dot = document.createElement("span");
+      dot.className = "class-dot";
+      if (row.color) dot.style.backgroundColor = row.color; // no colour = invisible dot, keeps alignment
+      name.append(dot, row.name);
+
+      const time = document.createElement("span");
+      time.textContent = formatMinutes(row.minutes);
+
+      li.append(name, time);
+      tooltipClasses.append(li);
+    }
+  }
+  tooltipClasses.hidden = tooltipClasses.children.length === 0;
+
+  // All content is filled in above, BEFORE measuring below,
+  // so a taller tooltip (more lines) is still placed correctly.
 
   // Show it first: a hidden element has no size, so we couldn't measure it.
   tooltip.hidden = false;

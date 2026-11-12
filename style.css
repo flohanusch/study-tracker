@@ -99,9 +99,30 @@ body {
   white-space: nowrap;
 }
 
-#heatmap-tooltip strong,
-#heatmap-tooltip span {
+#tooltip-date,
+#tooltip-time {
   display: block; /* date and time on separate lines */
+}
+
+#tooltip-classes {
+  /* no "display" here either, so the hidden attribute works */
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 4px 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.25);
+  font-size: 0.75rem;
+}
+
+#tooltip-classes li {
+  display: flex;
+  justify-content: space-between; /* class left, time right */
+  gap: 12px;
+}
+
+.tooltip-class-name {
+  max-width: 12em;         /* long class names... */
+  overflow: hidden;
+  text-overflow: ellipsis; /* ...end in "…" instead of making the tooltip huge */
 }
 
 .heatmap-legend {
