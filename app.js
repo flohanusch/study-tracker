@@ -32,14 +32,17 @@ function saveData() {
 
 // ---------- Dates ----------
 
-// Today's date as "YYYY-MM-DD" in local time.
+// Any Date as "YYYY-MM-DD" in local time.
 // (toISOString() would use UTC and can give the wrong day around midnight.)
-function todayString() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0"); // months start at 0
-  const day = String(now.getDate()).padStart(2, "0");
+function dateToString(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0"); // months start at 0
+  const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+function todayString() {
+  return dateToString(new Date());
 }
 
 // ---------- Rendering ----------
@@ -70,6 +73,62 @@ function renderSessions() {
   }
 }
 
+// ---------- Heatmap ----------
+
+const WEEKS = 52; // full weeks shown before the current week
+const heatmap = document.getElementById("heatmap");
+const heatmapScroll = document.getElementById("heatmap-scroll");
+
+// Total minutes per date, e.g. { "2026-11-12": 135 }.
+// Several sessions on the same day are added up.
+function minutesPerDay() {
+  const totals = {};
+  for (const session of data.sessions) {
+    totals[session.date] = (totals[session.date] || 0) + session.minutes;
+  }
+  return totals;
+}
+
+// Colour level 0-4 for a number of minutes (fixed limits).
+function levelFor(minutes) {
+  if (minutes === 0) return 0;
+  if (minutes < 30) return 1;
+  if (minutes < 60) return 2;
+  if (minutes < 120) return 3;
+  return 4;
+}
+
+function renderHeatmap() {
+  heatmap.innerHTML = ""; // clear old squares (no user text involved)
+
+  const totals = minutesPerDay();
+  const today = todayString();
+
+  // Start: Monday of the current week, then WEEKS weeks further back.
+  const now = new Date();
+  const day = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const daysSinceMonday = (day.getDay() + 6) % 7; // getDay(): Sunday = 0
+  day.setDate(day.getDate() - daysSinceMonday - WEEKS * 7);
+
+  // One square per day, in date order, up to and including today.
+  // CSS places them Mon->Sun down each column.
+  let dateStr = dateToString(day);
+  while (dateStr <= today) {
+    const minutes = totals[dateStr] || 0;
+
+    const cell = document.createElement("div");
+    cell.className = `cell level-${levelFor(minutes)}`;
+    cell.title = minutes > 0 ? `${dateStr}: ${minutes} min` : `${dateStr}: nothing logged`;
+    heatmap.append(cell);
+
+    day.setDate(day.getDate() + 1); // handles month ends, leap years, DST
+    dateStr = dateToString(day);
+  }
+
+  // Show the most recent weeks first on narrow screens.
+  heatmapScroll.scrollLeft = heatmapScroll.scrollWidth;
+}
+
 // ---------- Form ----------
 
 const form = document.getElementById("log-form");
@@ -91,6 +150,7 @@ form.addEventListener("submit", (event) => {
   data.sessions.push({ id: crypto.randomUUID(), date, minutes });
   saveData();
   renderSessions();
+  renderHeatmap();
 
   minutesInput.value = ""; // keep the date for logging more on the same day
   minutesInput.focus();
@@ -101,3 +161,4 @@ form.addEventListener("submit", (event) => {
 const data = loadData();
 dateInput.value = todayString();
 renderSessions();
+renderHeatmap();

@@ -28,7 +28,23 @@
     </section>
     <section id="heatmap-section">
       <h2>Activity</h2>
-      <div id="heatmap"></div>
+      <div class="heatmap-row">
+        <div class="heatmap-days" aria-hidden="true">
+          <span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span><span></span><span></span>
+        </div>
+        <div class="heatmap-scroll" id="heatmap-scroll">
+          <div id="heatmap"></div>
+        </div>
+      </div>
+      <div class="heatmap-legend" aria-hidden="true">
+        Less
+        <span class="cell level-0"></span>
+        <span class="cell level-1"></span>
+        <span class="cell level-2"></span>
+        <span class="cell level-3"></span>
+        <span class="cell level-4"></span>
+        More
+      </div>
     </section>
     <section id="classes-section">
       <h2>Classes</h2>
