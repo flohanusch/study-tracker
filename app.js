@@ -214,6 +214,96 @@ document.addEventListener("click", (event) => {
 // to also catch scrolling inside the heatmap box.
 window.addEventListener("scroll", hideTooltip, true);
 
+// ---------- Classes ----------
+
+const MAX_CLASS_NAME = 50; // same as maxlength="50" in index.html
+const classList = document.getElementById("classes");
+const classForm = document.getElementById("class-form");
+const classNameInput = document.getElementById("class-name");
+const classColorInput = document.getElementById("class-color");
+
+function renderClasses() {
+  classList.innerHTML = ""; // clear old cards (no user text involved)
+
+  if (data.classes.length === 0) {
+    const p = document.createElement("p");
+    p.className = "empty";
+    p.textContent = "No classes yet";
+    classList.append(p);
+    return;
+  }
+
+  // "cls", not "class": class is a reserved word in JavaScript.
+  for (const cls of data.classes) {
+    const card = document.createElement("article");
+    card.className = "class-card";
+    card.style.borderLeftColor = cls.color; // the coloured stripe
+
+    const header = document.createElement("div");
+    header.className = "class-header";
+
+    const name = document.createElement("h3");
+    name.textContent = cls.name;
+
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button"; // a plain button, not a form submit
+    deleteButton.className = "delete-button";
+    deleteButton.textContent = "Delete";
+    deleteButton.dataset.action = "delete-class"; // what the click listener should do
+    deleteButton.dataset.id = cls.id;             // ...and to which class
+    deleteButton.setAttribute("aria-label", `Delete class ${cls.name}`);
+
+    header.append(name, deleteButton);
+    card.append(header);
+    classList.append(card);
+  }
+}
+
+classForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+
+  // trim() removes spaces at the start and end; "   " becomes "".
+  const name = classNameInput.value.trim();
+  if (name === "" || name.length > MAX_CLASS_NAME) {
+    classNameInput.value = name; // drop the spaces, so "required" catches it next time
+    classNameInput.focus();
+    return;
+  }
+
+  // change data -> save -> re-render
+  data.classes.push({
+    id: crypto.randomUUID(),
+    name,
+    color: classColorInput.value, // always "#rrggbb"
+    topics: [],
+  });
+  saveData();
+  renderClasses();
+
+  classNameInput.value = "";
+  classNameInput.focus();
+});
+
+// One listener for all buttons inside the class cards (event delegation).
+// Each button says what it does in data-action and which item in data-id.
+classList.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-action]");
+  if (!button) return; // the click wasn't on one of our buttons
+
+  const id = button.dataset.id;
+
+  if (button.dataset.action === "delete-class") {
+    const cls = data.classes.find((c) => c.id === id);
+    if (!cls) return;
+    if (!confirm(`Delete class "${cls.name}" and all its topics?`)) return;
+
+    // Keep every class except this one.
+    data.classes = data.classes.filter((c) => c.id !== id);
+    saveData();
+    renderClasses();
+  }
+});
+
 // ---------- Form ----------
 
 const form = document.getElementById("log-form");
@@ -247,3 +337,4 @@ const data = loadData();
 dateInput.value = todayString();
 renderSessions();
 renderHeatmap();
+renderClasses();

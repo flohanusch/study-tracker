@@ -89,14 +89,16 @@ body {
 
 /* ---------- Log time ---------- */
 
-#log-form {
+#log-form,
+#class-form {
   display: flex;
   flex-wrap: wrap; /* fields move onto new lines on narrow screens */
   gap: 12px;
   align-items: flex-end;
 }
 
-#log-form label {
+#log-form label,
+#class-form label {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -104,9 +106,17 @@ body {
 }
 
 #log-form input,
-#log-form button {
+#log-form button,
+#class-form input,
+#class-form button {
   font: inherit;
   padding: 6px 10px;
+}
+
+#class-form input[type="color"] {
+  width: 3em;
+  height: 2.2em;
+  padding: 2px;
 }
 
 #sessions {
@@ -121,5 +131,44 @@ body {
 }
 
 #sessions li.empty {
+  color: #777;
+}
+
+/* ---------- Classes ---------- */
+
+.class-card {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-left: 6px solid #999; /* JS replaces the colour with the class colour */
+  border-radius: 6px;
+}
+
+.class-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* name left, button right */
+  gap: 8px;
+}
+
+.class-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  overflow-wrap: anywhere; /* long names wrap instead of pushing the button off screen */
+}
+
+.delete-button {
+  flex-shrink: 0; /* never squash the button */
+  font: inherit;
+  font-size: 0.8rem;
+  padding: 4px 8px;
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  color: #b00020;
+  cursor: pointer;
+}
+
+#classes .empty {
   color: #777;
 }
