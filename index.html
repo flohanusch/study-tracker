@@ -11,26 +11,6 @@
     <h1>Study Tracker</h1>
   </header>
   <main>
-    <section id="log-section">
-      <h2>Log time</h2>
-      <form id="log-form">
-        <label>
-          Date
-          <input type="date" id="log-date" required>
-        </label>
-        <label>
-          Class
-          <select id="log-class"></select>
-        </label>
-        <label>
-          Minutes
-          <input type="number" id="log-minutes" min="1" max="1440" step="1" required>
-        </label>
-        <button type="submit" id="log-submit">Add</button>
-        <button type="button" id="log-cancel" hidden>Cancel</button>
-      </form>
-      <ul id="sessions"></ul>
-    </section>
     <section id="heatmap-section">
       <h2>Activity</h2>
       <div id="stats"></div>
@@ -51,6 +31,28 @@
         <span class="cell level-4"></span>
         More
       </div>
+    </section>
+    <section id="log-section">
+      <a href="#" id="back-link" class="view-link" hidden>← Back</a>
+      <h2 id="log-heading">Log time</h2>
+      <form id="log-form">
+        <label>
+          Date
+          <input type="date" id="log-date" required>
+        </label>
+        <label>
+          Class
+          <select id="log-class"></select>
+        </label>
+        <label>
+          Minutes
+          <input type="number" id="log-minutes" min="1" max="1440" step="1" required>
+        </label>
+        <button type="submit" id="log-submit">Add</button>
+        <button type="button" id="log-cancel" hidden>Cancel</button>
+      </form>
+      <ul id="sessions"></ul>
+      <a href="#all-sessions" id="show-all-link" class="view-link" hidden>Show all sessions</a>
     </section>
     <section id="classes-section">
       <h2>Classes</h2>

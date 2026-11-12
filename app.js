@@ -91,11 +91,14 @@ function formatMinutes(minutes) {
 // ---------- Rendering ----------
 
 const sessionList = document.getElementById("sessions");
+const showAllLink = document.getElementById("show-all-link");
+const RECENT_SESSIONS = 5; // how many sessions the main view shows
 
 function renderSessions() {
   sessionList.innerHTML = ""; // clear old entries (no user text involved)
 
   if (data.sessions.length === 0) {
+    showAllLink.hidden = true;
     const li = document.createElement("li");
     li.textContent = "No sessions yet";
     li.className = "empty";
@@ -109,7 +112,15 @@ function renderSessions() {
     b.date.localeCompare(a.date)
   );
 
-  for (const session of newestFirst) {
+  // Main view: only the most recent few. "All sessions" view: everything.
+  // slice(0, 5) returns the first 5 items (or fewer if there aren't 5).
+  const shown = isAllSessionsView() ? newestFirst : newestFirst.slice(0, RECENT_SESSIONS);
+
+  // The "Show all" link only makes sense when some sessions are left out.
+  showAllLink.hidden = shown.length === newestFirst.length;
+  showAllLink.textContent = `Show all sessions (${newestFirst.length})`;
+
+  for (const session of shown) {
     const li = document.createElement("li");
     if (session.id === editingId) li.classList.add("editing"); // highlight
 
@@ -916,10 +927,52 @@ importInput.addEventListener("change", async () => {
   setStatus(`Imported ${summary}.`);
 });
 
+// ---------- Views ----------
+
+// Two "pages" in one file. The part of the address after # decides which:
+//   index.html                -> main view (everything, 5 recent sessions)
+//   index.html#all-sessions   -> only the log form and ALL sessions
+// Changing the # doesn't reload the page, but it does add a history entry,
+// so the browser's back button works. Same file = same localStorage,
+// so this also works when opening index.html directly (file://).
+const ALL_SESSIONS_HASH = "#all-sessions"; // must not match any element id,
+                                           // or the browser would jump to it
+const backLink = document.getElementById("back-link");
+const logHeading = document.getElementById("log-heading");
+const otherSections = [
+  document.getElementById("heatmap-section"),
+  document.getElementById("classes-section"),
+  document.getElementById("backup-section"),
+];
+
+function isAllSessionsView() {
+  return location.hash === ALL_SESSIONS_HASH;
+}
+
+function renderView() {
+  const allSessions = isAllSessionsView();
+
+  for (const section of otherSections) {
+    section.hidden = allSessions;
+  }
+  backLink.hidden = !allSessions;
+  logHeading.textContent = allSessions ? "All sessions" : "Log time";
+  hideTooltip();
+
+  // Redraw after showing/hiding: the session list depends on the view, and
+  // the heatmap can only scroll to today while it's visible.
+  renderSessionViews();
+  window.scrollTo(0, 0); // start at the top, like a new page
+}
+
+// Fires whenever the part after # changes: clicking the links,
+// or the browser's back/forward buttons.
+window.addEventListener("hashchange", renderView);
+
 // ---------- Start ----------
 
 const data = loadData();
 dateInput.value = todayString();
 renderClassOptions();
-renderSessionViews();
 renderClasses();
+renderView(); // also draws the sessions, heatmap and stats
