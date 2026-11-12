@@ -45,6 +45,28 @@ function todayString() {
   return dateToString(new Date());
 }
 
+// "2026-11-12" -> e.g. "Thu, 12 Nov 2026" (in the browser's language).
+function formatDate(dateStr) {
+  // Not new Date("2026-11-12"): that is read as UTC and can be the wrong day.
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const date = new Date(year, month - 1, day); // local time, months start at 0
+  return date.toLocaleDateString(undefined, {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+// 45 -> "45 min", 60 -> "1 h", 90 -> "1 h 30 min"
+function formatMinutes(minutes) {
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (hours === 0) return `${rest} min`;
+  if (rest === 0) return `${hours} h`;
+  return `${hours} h ${rest} min`;
+}
+
 // ---------- Rendering ----------
 
 const sessionList = document.getElementById("sessions");
@@ -118,7 +140,8 @@ function renderHeatmap() {
 
     const cell = document.createElement("div");
     cell.className = `cell level-${levelFor(minutes)}`;
-    cell.title = minutes > 0 ? `${dateStr}: ${minutes} min` : `${dateStr}: nothing logged`;
+    cell.dataset.date = dateStr;       // becomes data-date="..." for the tooltip
+    cell.dataset.minutes = minutes;    // becomes data-minutes="..." (stored as text)
     heatmap.append(cell);
 
     day.setDate(day.getDate() + 1); // handles month ends, leap years, DST
@@ -128,6 +151,68 @@ function renderHeatmap() {
   // Show the most recent weeks first on narrow screens.
   heatmapScroll.scrollLeft = heatmapScroll.scrollWidth;
 }
+
+// ---------- Heatmap tooltip ----------
+
+const tooltip = document.getElementById("heatmap-tooltip");
+const tooltipDate = document.getElementById("tooltip-date");
+const tooltipTime = document.getElementById("tooltip-time");
+
+function showTooltip(cell) {
+  const minutes = Number(cell.dataset.minutes); // data-* values are text
+  tooltipDate.textContent = formatDate(cell.dataset.date);
+  tooltipTime.textContent = minutes > 0 ? formatMinutes(minutes) : "Nothing logged";
+
+  // Show it first: a hidden element has no size, so we couldn't measure it.
+  tooltip.hidden = false;
+
+  const cellBox = cell.getBoundingClientRect(); // position on screen
+  const tipBox = tooltip.getBoundingClientRect();
+  const margin = 8; // keep this far from the screen edges
+  const screenWidth = document.documentElement.clientWidth;
+
+  // Centred above the square...
+  let left = cellBox.left + cellBox.width / 2 - tipBox.width / 2;
+  let top = cellBox.top - tipBox.height - 6;
+
+  // ...but pushed back inside the screen if it would stick out.
+  left = Math.max(margin, Math.min(left, screenWidth - tipBox.width - margin));
+  if (top < margin) {
+    top = cellBox.bottom + 6; // no room above: show it below instead
+  }
+
+  tooltip.style.left = `${left}px`;
+  tooltip.style.top = `${top}px`;
+}
+
+function hideTooltip() {
+  tooltip.hidden = true;
+}
+
+// One listener on the whole grid instead of one per square ("event delegation").
+// closest(".cell") finds the square the pointer is on, or null for the gaps.
+heatmap.addEventListener("mouseover", (event) => {
+  const cell = event.target.closest(".cell");
+  if (cell) showTooltip(cell);
+});
+
+heatmap.addEventListener("mouseleave", hideTooltip);
+
+// On phones a tap is a click.
+heatmap.addEventListener("click", (event) => {
+  const cell = event.target.closest(".cell");
+  if (cell) showTooltip(cell);
+});
+
+// A click anywhere else hides it. Clicks on a square also arrive here
+// (they bubble up), so those are ignored.
+document.addEventListener("click", (event) => {
+  if (!event.target.closest("#heatmap .cell")) hideTooltip();
+});
+
+// Scroll events don't bubble, so listen in the "capture" phase (true)
+// to also catch scrolling inside the heatmap box.
+window.addEventListener("scroll", hideTooltip, true);
 
 // ---------- Form ----------
 

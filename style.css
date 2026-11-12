@@ -53,6 +53,30 @@ body {
 .level-3 { background: #30a14e; }
 .level-4 { background: #216e39; }
 
+#heatmap .cell:hover {
+  outline: 1px solid #000;
+  outline-offset: -1px; /* draw inside the square, so the scroll box doesn't cut it off */
+}
+
+#heatmap-tooltip {
+  /* no "display" here, or it would override the hidden attribute */
+  position: fixed;      /* placed by JS in screen coordinates */
+  z-index: 10;          /* above everything else */
+  pointer-events: none; /* the mouse passes through it to the squares below */
+  padding: 6px 8px;
+  border-radius: 4px;
+  background: #24292f;
+  color: #fff;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+#heatmap-tooltip strong,
+#heatmap-tooltip span {
+  display: block; /* date and time on separate lines */
+}
+
 .heatmap-legend {
   display: flex;
   align-items: center;
