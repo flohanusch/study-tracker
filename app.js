@@ -98,15 +98,41 @@ function renderSessions() {
 
   for (const session of newestFirst) {
     const li = document.createElement("li");
-    li.textContent = `${session.date} · ${session.minutes} min`;
+    if (session.id === editingId) li.classList.add("editing"); // highlight
+
+    // Left side: "2026-11-12 · 45 min · ● Maths"
+    const text = document.createElement("span");
+    text.className = "session-text";
+    text.textContent = `${session.date} · ${session.minutes} min`;
 
     // Old sessions have no classId at all; treat that like "No class".
     if (session.classId) {
-      li.append(" · ", buildClassTag(session.classId)); // a plain string becomes text, not HTML
+      text.append(" · ", buildClassTag(session.classId)); // a plain string becomes text, not HTML
     }
 
+    // Right side: [Edit] [×]
+    const actions = document.createElement("span");
+    actions.className = "session-actions";
+    actions.append(
+      buildSessionButton("Edit", "edit-session", session.id, `Edit session ${session.date}`),
+      buildSessionButton("×", "delete-session", session.id, `Delete session ${session.date}`)
+    );
+
+    li.append(text, actions);
     sessionList.append(li);
   }
+}
+
+// A small button that the click listener on #sessions recognises by data-action.
+function buildSessionButton(text, action, sessionId, ariaLabel) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = action; // "edit-session" or "delete-session", used by the CSS
+  button.textContent = text;
+  button.dataset.action = action;
+  button.dataset.id = sessionId;
+  button.setAttribute("aria-label", ariaLabel);
+  return button;
 }
 
 // "● Maths" with the dot in the class colour, or "Deleted class".
@@ -621,6 +647,47 @@ const form = document.getElementById("log-form");
 const dateInput = document.getElementById("log-date");
 const minutesInput = document.getElementById("log-minutes");
 const classSelect = document.getElementById("log-class");
+const submitButton = document.getElementById("log-submit");
+const cancelButton = document.getElementById("log-cancel");
+
+// Id of the session being edited, or null when adding new ones.
+// Page state only: not saved, so a reload simply leaves edit mode.
+let editingId = null;
+
+// Everything that shows session data. Add, edit and delete all call this,
+// so none of the three views can be forgotten.
+function renderSessionViews() {
+  renderSessions();
+  renderHeatmap();
+  renderStats();
+}
+
+// Load a session into the form and switch it to "Save" mode.
+function startEditing(id) {
+  const session = data.sessions.find((s) => s.id === id);
+  if (!session) return;
+
+  editingId = id;
+  dateInput.value = session.date;
+  minutesInput.value = session.minutes;
+  // A deleted class isn't in the dropdown, so fall back to "No class".
+  classSelect.value = findClass(session.classId) ? session.classId : "";
+
+  submitButton.textContent = "Save";
+  cancelButton.hidden = false;
+  renderSessions(); // to highlight the line being edited
+
+  minutesInput.focus(); // also scrolls the form into view on a phone
+}
+
+// Back to normal "Add" mode. The caller re-renders afterwards.
+function stopEditing() {
+  editingId = null;
+  submitButton.textContent = "Add";
+  cancelButton.hidden = true;
+  dateInput.value = todayString();
+  minutesInput.value = "";
+}
 
 // Fill the class dropdown: "No class" first, then one option per class.
 function renderClassOptions() {
@@ -655,14 +722,50 @@ form.addEventListener("submit", (event) => {
   }
 
   // change data -> save -> re-render
-  data.sessions.push({ id: crypto.randomUUID(), date, minutes, classId });
+  const wasEditing = editingId !== null;
+  if (wasEditing) {
+    // find() returns the stored object itself, not a copy,
+    // so changing its fields changes data.sessions directly.
+    const session = data.sessions.find((s) => s.id === editingId);
+    if (!session) return;
+    session.date = date;
+    session.minutes = minutes;
+    session.classId = classId;
+  } else {
+    data.sessions.push({ id: crypto.randomUUID(), date, minutes, classId });
+  }
   saveData();
-  renderSessions();
-  renderHeatmap();
-  renderStats();
+  if (wasEditing) stopEditing();
+  renderSessionViews();
 
   minutesInput.value = ""; // keep the date for logging more on the same day
   minutesInput.focus();
+});
+
+cancelButton.addEventListener("click", () => {
+  stopEditing();
+  renderSessions(); // remove the highlight
+});
+
+// Edit and × buttons in the session list (event delegation, as for classes).
+sessionList.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-action]");
+  if (!button) return;
+
+  const id = button.dataset.id;
+
+  if (button.dataset.action === "edit-session") {
+    startEditing(id);
+  }
+
+  if (button.dataset.action === "delete-session") {
+    data.sessions = data.sessions.filter((s) => s.id !== id);
+    saveData();
+    // Deleting the session being edited: leave edit mode, otherwise
+    // "Save" would try to update a session that no longer exists.
+    if (editingId === id) stopEditing();
+    renderSessionViews();
+  }
 });
 
 // ---------- Start ----------
@@ -670,7 +773,5 @@ form.addEventListener("submit", (event) => {
 const data = loadData();
 dateInput.value = todayString();
 renderClassOptions();
-renderSessions();
-renderHeatmap();
-renderStats();
+renderSessionViews();
 renderClasses();

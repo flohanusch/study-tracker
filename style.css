@@ -175,8 +175,46 @@ body {
 }
 
 #sessions li {
-  padding: 6px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* text left, buttons right */
+  gap: 8px;
+  padding: 6px 4px;
   border-bottom: 1px solid #ddd;
+}
+
+#sessions li.editing {
+  background: #fff8db; /* the line currently loaded into the form */
+}
+
+.session-text {
+  min-width: 0;            /* may shrink, so long class names wrap */
+  overflow-wrap: anywhere;
+}
+
+.session-actions {
+  display: flex;
+  flex-shrink: 0;          /* buttons never get squashed */
+  gap: 4px;
+}
+
+.session-actions button {
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 2px 8px;
+  background: none;
+  border: 1px solid transparent; /* invisible, but keeps the size when it appears on hover */
+  border-radius: 4px;
+  color: #555;
+  cursor: pointer;
+}
+
+.session-actions button:hover {
+  border-color: #ccc;
+}
+
+.session-actions .delete-session:hover {
+  color: #b00020;
 }
 
 #sessions li.empty {
