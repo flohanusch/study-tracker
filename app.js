@@ -18,12 +18,25 @@ function loadData() {
     return empty;
   }
 
-  // Fill in anything missing, so older or partial data still works.
-  // Future migrations go here.
+  return normalizeData(saved);
+}
+
+// Fill in anything missing, so older or partial data still works.
+// Used for localStorage AND for imported backups, so future migrations
+// go here and automatically apply to old backup files too.
+function normalizeData(saved) {
+  if (!isObject(saved)) {
+    saved = {}; // e.g. the text "null" or "42" was saved
+  }
   return {
     classes: Array.isArray(saved.classes) ? saved.classes : [],
     sessions: Array.isArray(saved.sessions) ? saved.sessions : [],
   };
+}
+
+// true for {...} objects; false for null, numbers, text, etc.
+function isObject(value) {
+  return typeof value === "object" && value !== null;
 }
 
 function saveData() {
@@ -766,6 +779,141 @@ sessionList.addEventListener("click", (event) => {
     if (editingId === id) stopEditing();
     renderSessionViews();
   }
+});
+
+// ---------- Backup ----------
+
+const exportButton = document.getElementById("export-button");
+const importButton = document.getElementById("import-button");
+const importInput = document.getElementById("import-input");
+const backupStatus = document.getElementById("backup-status");
+
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;   // "2026-11-12"
+const COLOR_PATTERN = /^#[0-9a-f]{6}$/i;      // "#3b82f6" (i = any case)
+
+function setStatus(text, isError = false) {
+  backupStatus.textContent = text;
+  backupStatus.classList.toggle("error", isError); // red for errors
+}
+
+// "1 class", "3 classes"
+function countText(count, singular, plural) {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
+// Non-empty text, not longer than maxLength.
+function isText(value, maxLength) {
+  return typeof value === "string" && value.trim() !== "" && value.length <= maxLength;
+}
+
+function isValidTopic(topic) {
+  return (
+    isObject(topic) &&
+    typeof topic.id === "string" &&
+    isText(topic.title, MAX_TOPIC_TITLE) &&
+    typeof topic.done === "boolean"
+  );
+}
+
+function isValidClass(cls) {
+  return (
+    isObject(cls) &&
+    typeof cls.id === "string" &&
+    isText(cls.name, MAX_CLASS_NAME) &&
+    COLOR_PATTERN.test(cls.color) &&
+    Array.isArray(cls.topics) &&
+    cls.topics.every(isValidTopic) // every() is true only if ALL topics pass
+  );
+}
+
+function isValidSession(session) {
+  return (
+    isObject(session) &&
+    typeof session.id === "string" &&
+    typeof session.date === "string" &&
+    DATE_PATTERN.test(session.date) &&
+    Number.isInteger(session.minutes) && // a real number, not text like "45"
+    session.minutes >= 1 &&
+    session.minutes <= MAX_MINUTES &&
+    // classId: missing (old sessions), null (no class) or an id
+    (session.classId === undefined || session.classId === null || typeof session.classId === "string")
+  );
+}
+
+// Export: turn data into a .json file and let the browser download it.
+exportButton.addEventListener("click", () => {
+  const json = JSON.stringify(data, null, 2); // 2 = indent, so the file is readable
+  const blob = new Blob([json], { type: "application/json" }); // a file in memory
+  const url = URL.createObjectURL(blob); // a temporary address for that file
+
+  // A link with "download" saves the file instead of opening it.
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `study-tracker-backup-${todayString()}.json`;
+  document.body.append(link); // some browsers only click links that are on the page
+  link.click();
+  link.remove();
+
+  // Free the memory a moment later, once the download has started.
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+  setStatus("Backup exported.");
+});
+
+// The visible button opens the hidden file input's file chooser.
+importButton.addEventListener("click", () => {
+  importInput.click();
+});
+
+// "async" lets us use "await" inside: wait for the file to be read,
+// without freezing the page, while the code still reads top to bottom.
+importInput.addEventListener("change", async () => {
+  const file = importInput.files[0];
+  // Clear it, so choosing the same file again still counts as a "change".
+  importInput.value = "";
+  if (!file) return; // the file chooser was closed without picking a file
+
+  // 1. Read and parse. Anything that isn't JSON ends up in catch.
+  let parsed;
+  try {
+    parsed = JSON.parse(await file.text());
+  } catch (error) {
+    setStatus("This file isn't a valid backup (not JSON).", true);
+    return;
+  }
+
+  // 2. Check everything BEFORE touching the current data.
+  if (!isObject(parsed) || !Array.isArray(parsed.classes) || !Array.isArray(parsed.sessions)) {
+    setStatus("This file isn't a study tracker backup.", true);
+    return;
+  }
+  const imported = normalizeData(parsed);
+  if (!imported.classes.every(isValidClass) || !imported.sessions.every(isValidSession)) {
+    setStatus("This backup contains invalid entries. Nothing was changed.", true);
+    return;
+  }
+
+  // 3. Confirm, showing what's in the file.
+  const summary = `${countText(imported.classes.length, "class", "classes")}, ${countText(imported.sessions.length, "session", "sessions")}`;
+  if (!confirm(`Replace all current data with this backup? (${summary})`)) {
+    setStatus("Import cancelled.");
+    return;
+  }
+
+  // 4. Replace. data is const, so we replace its contents, not data itself.
+  data.classes = imported.classes;
+  data.sessions = imported.sessions;
+  saveData();
+
+  // The session being edited might not exist in the backup.
+  if (editingId !== null) stopEditing();
+
+  // Everything on the page shows data, so redraw everything.
+  renderClassOptions();
+  renderSessionViews();
+  renderClasses();
+
+  setStatus(`Imported ${summary}.`);
 });
 
 // ---------- Start ----------

@@ -1,0 +1,3 @@
+# Personal data must never be committed (the repo is public)
+*.json
+study-tracker-backup*

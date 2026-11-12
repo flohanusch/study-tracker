@@ -367,3 +367,35 @@ body {
   font: inherit;
   padding: 4px 10px;
 }
+
+/* ---------- Backup ---------- */
+
+#backup-section {
+  margin-top: 32px;
+}
+
+.hint {
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.backup-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.backup-buttons button {
+  font: inherit;
+  padding: 6px 10px;
+}
+
+#backup-status {
+  min-height: 1.2em; /* keeps its space, so the page doesn't jump when text appears */
+  font-size: 0.9rem;
+  color: #1a7f37;
+}
+
+#backup-status.error {
+  color: #b00020;
+}

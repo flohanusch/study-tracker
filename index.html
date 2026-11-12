@@ -67,6 +67,19 @@
       </form>
       <div id="classes"></div>
     </section>
+    <section id="backup-section">
+      <h2>Backup</h2>
+      <p class="hint">
+        Your data is stored only in this browser. Export a backup now and then;
+        import it to restore your data or move it to another browser or device.
+      </p>
+      <div class="backup-buttons">
+        <button type="button" id="export-button">Export backup</button>
+        <button type="button" id="import-button">Import backup</button>
+        <input type="file" id="import-input" accept=".json,application/json" hidden>
+      </div>
+      <p id="backup-status" role="status"></p>
+    </section>
   </main>
   <div id="heatmap-tooltip" role="tooltip" hidden>
     <strong id="tooltip-date"></strong>
