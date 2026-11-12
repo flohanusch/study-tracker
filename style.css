@@ -106,6 +106,7 @@ body {
 }
 
 #log-form input,
+#log-form select,
 #log-form button,
 #class-form input,
 #class-form button {
@@ -132,6 +133,24 @@ body {
 
 #sessions li.empty {
   color: #777;
+}
+
+#log-form select {
+  max-width: 12em; /* long class names don't make the form wider than a phone */
+}
+
+.class-dot {
+  display: inline-block; /* a span needs this to get a width and height */
+  width: 0.6em;
+  height: 0.6em;
+  margin-right: 4px;
+  border-radius: 50%;    /* square -> circle */
+  vertical-align: middle;
+}
+
+.class-tag.deleted {
+  color: #999;
+  font-style: italic;
 }
 
 /* ---------- Classes ---------- */

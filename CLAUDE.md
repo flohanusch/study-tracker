@@ -57,7 +57,7 @@ Stored as one JSON object under the localStorage key `study-tracker`:
 2. ✅ **Logging time**: form with date + minutes, saved to localStorage, list of sessions
 3. ✅ **Heatmap**: last 52 weeks as a grid (weeks as columns, Mon–Sun as rows), 5 color levels by minutes, tooltip on hover with date and time studied
 4. ✅ **Classes & topics**: add/delete classes and topics, check topics off, progress per class
-5. **Connect**: pick a class when logging time; stats (streak, hours this week, total); per-class breakdown in the heatmap tooltip
+5. ⏳ **Connect**: pick a class when logging time; stats (streak, hours this week, total); per-class breakdown in the heatmap tooltip
 6. **Polish**: delete/edit sessions, backup export/import (JSON), dark mode, README with a screenshot
 
 Update the ✅ / ⏳ markers when a step is done.

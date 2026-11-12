@@ -91,8 +91,34 @@ function renderSessions() {
   for (const session of newestFirst) {
     const li = document.createElement("li");
     li.textContent = `${session.date} · ${session.minutes} min`;
+
+    // Old sessions have no classId at all; treat that like "No class".
+    if (session.classId) {
+      li.append(" · ", buildClassTag(session.classId)); // a plain string becomes text, not HTML
+    }
+
     sessionList.append(li);
   }
+}
+
+// "● Maths" with the dot in the class colour, or "Deleted class".
+function buildClassTag(classId) {
+  const tag = document.createElement("span");
+  tag.className = "class-tag";
+
+  const cls = findClass(classId);
+  if (!cls) {
+    tag.classList.add("deleted");
+    tag.textContent = "Deleted class";
+    return tag;
+  }
+
+  const dot = document.createElement("span");
+  dot.className = "class-dot";
+  dot.style.backgroundColor = cls.color;
+
+  tag.append(dot, cls.name);
+  return tag;
 }
 
 // ---------- Heatmap ----------
@@ -222,6 +248,11 @@ const classList = document.getElementById("classes");
 const classForm = document.getElementById("class-form");
 const classNameInput = document.getElementById("class-name");
 const classColorInput = document.getElementById("class-color");
+
+// The class with this id, or undefined if there is none (e.g. deleted).
+function findClass(id) {
+  return data.classes.find((c) => c.id === id);
+}
 
 function renderClasses() {
   classList.innerHTML = ""; // clear old cards (no user text involved)
@@ -373,6 +404,7 @@ classForm.addEventListener("submit", (event) => {
   });
   saveData();
   renderClasses();
+  renderClassOptions(); // the new class appears in the log form
 
   classNameInput.value = "";
   classNameInput.focus();
@@ -389,12 +421,14 @@ classList.addEventListener("click", (event) => {
   if (button.dataset.action === "delete-class") {
     const cls = data.classes.find((c) => c.id === id);
     if (!cls) return;
-    if (!confirm(`Delete class "${cls.name}" and all its topics?`)) return;
+    if (!confirm(`Delete class "${cls.name}" and all its topics? Logged time stays in the heatmap.`)) return;
 
     // Keep every class except this one.
     data.classes = data.classes.filter((c) => c.id !== id);
     saveData();
     renderClasses();
+    renderClassOptions(); // remove it from the log form
+    renderSessions();     // its sessions now show "Deleted class"
   }
 
   if (button.dataset.action === "delete-topic") {
@@ -459,6 +493,22 @@ classList.addEventListener("submit", (event) => {
 const form = document.getElementById("log-form");
 const dateInput = document.getElementById("log-date");
 const minutesInput = document.getElementById("log-minutes");
+const classSelect = document.getElementById("log-class");
+
+// Fill the class dropdown: "No class" first, then one option per class.
+function renderClassOptions() {
+  const previous = classSelect.value; // remember the choice before rebuilding
+
+  classSelect.innerHTML = ""; // clear old options (no user text involved)
+  // new Option(text, value) treats the text as plain text, not HTML.
+  classSelect.append(new Option("No class", ""));
+  for (const cls of data.classes) {
+    classSelect.append(new Option(cls.name, cls.id));
+  }
+
+  // Put the old choice back, unless that class was just deleted.
+  classSelect.value = findClass(previous) ? previous : "";
+}
 
 form.addEventListener("submit", (event) => {
   event.preventDefault(); // stop the browser from reloading the page
@@ -471,8 +521,14 @@ form.addEventListener("submit", (event) => {
     return;
   }
 
+  // "" means "No class"; store that as null.
+  const classId = classSelect.value || null;
+  if (classId !== null && !findClass(classId)) {
+    return; // not a class that exists
+  }
+
   // change data -> save -> re-render
-  data.sessions.push({ id: crypto.randomUUID(), date, minutes });
+  data.sessions.push({ id: crypto.randomUUID(), date, minutes, classId });
   saveData();
   renderSessions();
   renderHeatmap();
@@ -485,6 +541,7 @@ form.addEventListener("submit", (event) => {
 
 const data = loadData();
 dateInput.value = todayString();
+renderClassOptions();
 renderSessions();
 renderHeatmap();
 renderClasses();
