@@ -1,8 +1,69 @@
+/* ---------- Colours and sizes ---------- */
+
+/* All colours live here as variables. The rules below only use
+   var(--name), so dark mode just redefines the variables. */
+:root {
+  color-scheme: light dark; /* form fields, date picker and scrollbars follow too */
+
+  --bg: #ffffff;
+  --text: #1f2328;
+  --muted: #555555;        /* secondary text: hints, progress, buttons */
+  --faint: #777777;        /* labels, empty states, ticked topics */
+  --border: #dddddd;
+  --border-light: #eeeeee; /* thin lines between topics, progress track */
+  --danger: #b00020;
+  --success: #1a7f37;
+  --highlight: #fff8db;    /* session being edited */
+
+  --tooltip-bg: #24292f;
+  --tooltip-text: #ffffff;
+  --tooltip-border: #24292f;
+
+  /* Heatmap: 0 minutes ... most minutes */
+  --level-0: #ebedf0;
+  --level-1: #9be9a8;
+  --level-2: #40c463;
+  --level-3: #30a14e;
+  --level-4: #216e39;
+
+  --cell: 12px; /* size of one heatmap square */
+  --gap: 3px;   /* space between squares */
+}
+
+/* Dark mode: only the colours change. Applied when the system or
+   browser is set to dark. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121212;
+    --text: #e6e6e6;
+    --muted: #b0b0b0;
+    --faint: #8a8a8a;
+    --border: #3a3a3a;
+    --border-light: #2a2a2a;
+    --danger: #ff6b6b;
+    --success: #3fb950;
+    --highlight: #3a3214;
+
+    --tooltip-bg: #2e2e2e;
+    --tooltip-text: #ffffff;
+    --tooltip-border: #4a4a4a; /* so the tooltip stands out from the dark page */
+
+    /* Dark grey for nothing, brighter green for more */
+    --level-0: #262626;
+    --level-1: #0e4429;
+    --level-2: #006d32;
+    --level-3: #26a641;
+    --level-4: #39d353;
+  }
+}
+
 body {
   font-family: system-ui, sans-serif;
   max-width: 900px;
   margin: 0 auto;
   padding: 24px 16px;
+  background: var(--bg);
+  color: var(--text);
 }
 
 /* ---------- Stats ---------- */
@@ -19,7 +80,7 @@ body {
   display: flex;
   flex-direction: column; /* value above label */
   padding: 8px 12px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border);
   border-radius: 6px;
 }
 
@@ -29,15 +90,10 @@ body {
 
 .stat-label {
   font-size: 0.8rem;
-  color: #777;
+  color: var(--faint);
 }
 
 /* ---------- Heatmap ---------- */
-
-:root {
-  --cell: 12px; /* size of one square */
-  --gap: 3px;   /* space between squares */
-}
 
 .heatmap-row {
   display: flex;
@@ -50,7 +106,7 @@ body {
   gap: var(--gap);
   font-size: 10px;
   line-height: var(--cell);
-  color: #777;
+  color: var(--faint);
 }
 
 .heatmap-scroll {
@@ -74,14 +130,14 @@ body {
   border-radius: 2px;
 }
 
-.level-0 { background: #ebedf0; }
-.level-1 { background: #9be9a8; }
-.level-2 { background: #40c463; }
-.level-3 { background: #30a14e; }
-.level-4 { background: #216e39; }
+.level-0 { background: var(--level-0); }
+.level-1 { background: var(--level-1); }
+.level-2 { background: var(--level-2); }
+.level-3 { background: var(--level-3); }
+.level-4 { background: var(--level-4); }
 
 #heatmap .cell:hover {
-  outline: 1px solid #000;
+  outline: 1px solid var(--text); /* black in light mode, white in dark mode */
   outline-offset: -1px; /* draw inside the square, so the scroll box doesn't cut it off */
 }
 
@@ -91,9 +147,10 @@ body {
   z-index: 10;          /* above everything else */
   pointer-events: none; /* the mouse passes through it to the squares below */
   padding: 6px 8px;
+  border: 1px solid var(--tooltip-border);
   border-radius: 4px;
-  background: #24292f;
-  color: #fff;
+  background: var(--tooltip-bg);
+  color: var(--tooltip-text);
   font-size: 0.8rem;
   line-height: 1.4;
   white-space: nowrap;
@@ -109,7 +166,7 @@ body {
   list-style: none;
   margin: 4px 0 0;
   padding: 4px 0 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.25);
+  border-top: 1px solid rgba(255, 255, 255, 0.25); /* the tooltip is dark in both modes */
   font-size: 0.75rem;
 }
 
@@ -132,7 +189,7 @@ body {
   gap: var(--gap);
   margin-top: 8px;
   font-size: 0.8rem;
-  color: #777;
+  color: var(--faint);
 }
 
 /* ---------- Log time ---------- */
@@ -180,11 +237,11 @@ body {
   justify-content: space-between; /* text left, buttons right */
   gap: 8px;
   padding: 6px 4px;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--border);
 }
 
 #sessions li.editing {
-  background: #fff8db; /* the line currently loaded into the form */
+  background: var(--highlight); /* the line currently loaded into the form */
 }
 
 .session-text {
@@ -205,20 +262,20 @@ body {
   background: none;
   border: 1px solid transparent; /* invisible, but keeps the size when it appears on hover */
   border-radius: 4px;
-  color: #555;
+  color: var(--muted);
   cursor: pointer;
 }
 
 .session-actions button:hover {
-  border-color: #ccc;
+  border-color: var(--border);
 }
 
 .session-actions .delete-session:hover {
-  color: #b00020;
+  color: var(--danger);
 }
 
 #sessions li.empty {
-  color: #777;
+  color: var(--faint);
 }
 
 #log-form select {
@@ -235,7 +292,7 @@ body {
 }
 
 .class-tag.deleted {
-  color: #999;
+  color: var(--faint);
   font-style: italic;
 }
 
@@ -244,8 +301,8 @@ body {
 .class-card {
   margin-top: 12px;
   padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-left: 6px solid #999; /* JS replaces the colour with the class colour */
+  border: 1px solid var(--border);
+  border-left: 6px solid var(--faint); /* JS replaces the colour with the class colour */
   border-radius: 6px;
 }
 
@@ -268,14 +325,14 @@ body {
   font-size: 0.8rem;
   padding: 4px 8px;
   background: none;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border);
   border-radius: 4px;
-  color: #b00020;
+  color: var(--danger);
   cursor: pointer;
 }
 
 #classes .empty {
-  color: #777;
+  color: var(--faint);
 }
 
 /* ---------- Topics ---------- */
@@ -286,14 +343,14 @@ body {
   gap: 8px;
   margin-top: 8px;
   font-size: 0.85rem;
-  color: #555;
+  color: var(--muted);
 }
 
 .progress-bar {
   flex: 1;              /* take the free space... */
   max-width: 200px;     /* ...but not more than this */
   height: 8px;
-  background: #eee;
+  background: var(--border-light);
   border-radius: 4px;
   overflow: hidden;     /* keeps the fill inside the rounded corners */
 }
@@ -314,7 +371,7 @@ body {
   justify-content: space-between; /* topic left, × right */
   gap: 8px;
   padding: 4px 0;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .topic-list label {
@@ -333,7 +390,7 @@ body {
 
 .topic-list li.done span {
   text-decoration: line-through;
-  color: #888;
+  color: var(--faint);
 }
 
 .topic-delete {
@@ -342,12 +399,12 @@ body {
   background: none;
   border: none;
   font-size: 1.1rem;
-  color: #999;
+  color: var(--faint);
   cursor: pointer;
 }
 
 .topic-delete:hover {
-  color: #b00020;
+  color: var(--danger);
 }
 
 .topic-form {
@@ -376,7 +433,7 @@ body {
 
 .hint {
   font-size: 0.9rem;
-  color: #555;
+  color: var(--muted);
 }
 
 .backup-buttons {
@@ -393,9 +450,9 @@ body {
 #backup-status {
   min-height: 1.2em; /* keeps its space, so the page doesn't jump when text appears */
   font-size: 0.9rem;
-  color: #1a7f37;
+  color: var(--success);
 }
 
 #backup-status.error {
-  color: #b00020;
+  color: var(--danger);
 }
