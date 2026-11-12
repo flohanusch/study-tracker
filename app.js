@@ -217,6 +217,7 @@ window.addEventListener("scroll", hideTooltip, true);
 // ---------- Classes ----------
 
 const MAX_CLASS_NAME = 50; // same as maxlength="50" in index.html
+const MAX_TOPIC_TITLE = 100;
 const classList = document.getElementById("classes");
 const classForm = document.getElementById("class-form");
 const classNameInput = document.getElementById("class-name");
@@ -254,9 +255,102 @@ function renderClasses() {
     deleteButton.setAttribute("aria-label", `Delete class ${cls.name}`);
 
     header.append(name, deleteButton);
-    card.append(header);
+    card.append(header, buildProgress(cls), buildTopicList(cls), buildTopicForm(cls));
     classList.append(card);
   }
+}
+
+// "3 / 5 topics · 60%" with a bar in the class colour.
+function buildProgress(cls) {
+  const wrap = document.createElement("div");
+  wrap.className = "progress";
+
+  const total = cls.topics.length;
+  if (total === 0) {
+    // Checked first: 0 / 0 would be NaN.
+    wrap.classList.add("empty");
+    wrap.textContent = "No topics yet";
+    return wrap;
+  }
+
+  const done = cls.topics.filter((topic) => topic.done).length;
+  const percent = Math.round((done / total) * 100);
+
+  const bar = document.createElement("div");
+  bar.className = "progress-bar";
+  const fill = document.createElement("div");
+  fill.className = "progress-fill";
+  fill.style.width = `${percent}%`;
+  fill.style.backgroundColor = cls.color;
+  bar.append(fill);
+
+  const text = document.createElement("span");
+  text.textContent = `${done} / ${total} topics · ${percent}%`;
+
+  wrap.append(bar, text);
+  return wrap;
+}
+
+// One row per topic: checkbox + title (inside a label) and a × button.
+function buildTopicList(cls) {
+  const ul = document.createElement("ul");
+  ul.className = "topic-list";
+
+  for (const topic of cls.topics) {
+    const li = document.createElement("li");
+    if (topic.done) li.classList.add("done");
+
+    // Wrapping both in a <label> means tapping the title also ticks the box.
+    const label = document.createElement("label");
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = topic.done;
+    checkbox.dataset.action = "toggle-topic";
+    checkbox.dataset.classId = cls.id; // becomes data-class-id="..."
+    checkbox.dataset.id = topic.id;
+
+    const title = document.createElement("span");
+    title.textContent = topic.title;
+
+    label.append(checkbox, title);
+
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "topic-delete";
+    deleteButton.textContent = "×";
+    deleteButton.dataset.action = "delete-topic";
+    deleteButton.dataset.classId = cls.id;
+    deleteButton.dataset.id = topic.id;
+    deleteButton.setAttribute("aria-label", `Delete topic ${topic.title}`);
+
+    li.append(label, deleteButton);
+    ul.append(li);
+  }
+
+  return ul;
+}
+
+// Small "New topic [Add]" form at the bottom of each card.
+function buildTopicForm(cls) {
+  const form = document.createElement("form");
+  form.className = "topic-form";
+  form.dataset.classId = cls.id; // which class the new topic belongs to
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.name = "title"; // lets us find it later as form.elements.title
+  input.placeholder = "New topic";
+  input.maxLength = MAX_TOPIC_TITLE;
+  input.required = true;
+  input.setAttribute("aria-label", `New topic for ${cls.name}`);
+
+  const button = document.createElement("button");
+  button.type = "submit";
+  button.textContent = "Add";
+
+  form.append(input, button);
+  return form;
 }
 
 classForm.addEventListener("submit", (event) => {
@@ -302,6 +396,62 @@ classList.addEventListener("click", (event) => {
     saveData();
     renderClasses();
   }
+
+  if (button.dataset.action === "delete-topic") {
+    const cls = data.classes.find((c) => c.id === button.dataset.classId);
+    if (!cls) return;
+
+    // Keep every topic except this one.
+    cls.topics = cls.topics.filter((topic) => topic.id !== id);
+    saveData();
+    renderClasses();
+  }
+});
+
+// Ticking or unticking a topic. "change" fires only when the state really
+// changes, and also when using the keyboard (space bar).
+classList.addEventListener("change", (event) => {
+  const checkbox = event.target;
+  if (checkbox.dataset.action !== "toggle-topic") return;
+
+  const cls = data.classes.find((c) => c.id === checkbox.dataset.classId);
+  if (!cls) return;
+  const topic = cls.topics.find((t) => t.id === checkbox.dataset.id);
+  if (!topic) return;
+
+  topic.done = checkbox.checked; // copy what the user now sees
+  saveData();
+  renderClasses();
+});
+
+// Adding a topic. Submit events bubble up like clicks, so this one listener
+// handles the topic form in every card.
+classList.addEventListener("submit", (event) => {
+  const form = event.target.closest(".topic-form");
+  if (!form) return;
+  event.preventDefault();
+
+  const input = form.elements.title;
+  const title = input.value.trim();
+  if (title === "" || title.length > MAX_TOPIC_TITLE) {
+    input.value = title;
+    input.focus();
+    return;
+  }
+
+  const classId = form.dataset.classId;
+  const cls = data.classes.find((c) => c.id === classId);
+  if (!cls) return;
+
+  // change data -> save -> re-render
+  cls.topics.push({ id: crypto.randomUUID(), title, done: false });
+  saveData();
+  renderClasses();
+
+  // The re-render replaced the form, so the cursor is gone.
+  // Find this class's new topic field and put the cursor back.
+  const newInput = classList.querySelector(`.topic-form[data-class-id="${classId}"] input`);
+  if (newInput) newInput.focus();
 });
 
 // ---------- Form ----------

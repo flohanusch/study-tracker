@@ -172,3 +172,93 @@ body {
 #classes .empty {
   color: #777;
 }
+
+/* ---------- Topics ---------- */
+
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.progress-bar {
+  flex: 1;              /* take the free space... */
+  max-width: 200px;     /* ...but not more than this */
+  height: 8px;
+  background: #eee;
+  border-radius: 4px;
+  overflow: hidden;     /* keeps the fill inside the rounded corners */
+}
+
+.progress-fill {
+  height: 100%;         /* width and colour are set by JS */
+}
+
+.topic-list {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+}
+
+.topic-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* topic left, × right */
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.topic-list label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;            /* lets long titles wrap instead of overflowing */
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.topic-list input[type="checkbox"] {
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.topic-list li.done span {
+  text-decoration: line-through;
+  color: #888;
+}
+
+.topic-delete {
+  flex-shrink: 0;
+  padding: 2px 10px;       /* bigger tap target on phones */
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  color: #999;
+  cursor: pointer;
+}
+
+.topic-delete:hover {
+  color: #b00020;
+}
+
+.topic-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.topic-form input {
+  flex: 1;      /* the field takes the remaining width */
+  min-width: 0; /* and may shrink on narrow screens */
+  font: inherit;
+  padding: 4px 8px;
+}
+
+.topic-form button {
+  font: inherit;
+  padding: 4px 10px;
+}
