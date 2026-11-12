@@ -45,6 +45,14 @@ function todayString() {
   return dateToString(new Date());
 }
 
+// The Monday of the week that `date` falls in, as a new Date at midnight.
+function mondayOf(date) {
+  const monday = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const daysSinceMonday = (monday.getDay() + 6) % 7; // getDay(): Sunday = 0
+  monday.setDate(monday.getDate() - daysSinceMonday);
+  return monday;
+}
+
 // "2026-11-12" -> e.g. "Thu, 12 Nov 2026" (in the browser's language).
 function formatDate(dateStr) {
   // Not new Date("2026-11-12"): that is read as UTC and can be the wrong day.
@@ -153,10 +161,8 @@ function renderHeatmap() {
   const today = todayString();
 
   // Start: Monday of the current week, then WEEKS weeks further back.
-  const now = new Date();
-  const day = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const daysSinceMonday = (day.getDay() + 6) % 7; // getDay(): Sunday = 0
-  day.setDate(day.getDate() - daysSinceMonday - WEEKS * 7);
+  const day = mondayOf(new Date());
+  day.setDate(day.getDate() - WEEKS * 7);
 
   // One square per day, in date order, up to and including today.
   // CSS places them Mon->Sun down each column.
@@ -176,6 +182,69 @@ function renderHeatmap() {
 
   // Show the most recent weeks first on narrow screens.
   heatmapScroll.scrollLeft = heatmapScroll.scrollWidth;
+}
+
+// ---------- Stats ----------
+
+const statsBox = document.getElementById("stats");
+
+// Days in a row with any study, counting back from today.
+// If nothing is logged today yet, start from yesterday instead,
+// so the streak doesn't show 0 every morning.
+function currentStreak(totals) {
+  const day = new Date();
+  if (!totals[dateToString(day)]) {
+    day.setDate(day.getDate() - 1);
+  }
+
+  let streak = 0;
+  while (totals[dateToString(day)]) { // undefined (no study) stops the loop
+    streak++;
+    day.setDate(day.getDate() - 1); // one day back; safe across months and DST
+  }
+  return streak;
+}
+
+function renderStats() {
+  const today = todayString();
+  const monday = dateToString(mondayOf(new Date()));
+
+  let total = 0;
+  let week = 0;
+  for (const session of data.sessions) {
+    total += session.minutes;
+    // Text comparison works because "YYYY-MM-DD" is in date order.
+    if (session.date >= monday && session.date <= today) {
+      week += session.minutes;
+    }
+  }
+
+  const streak = currentStreak(minutesPerDay());
+  const streakText = `${streak} ${streak === 1 ? "day" : "days"}`;
+
+  statsBox.innerHTML = ""; // clear old boxes (no user text involved)
+  statsBox.append(
+    buildStat(streakText, "Streak"),
+    buildStat(formatMinutes(week), "This week"),
+    buildStat(formatMinutes(total), "Total")
+  );
+}
+
+// One box: big value on top, small label below.
+function buildStat(value, label) {
+  const box = document.createElement("div");
+  box.className = "stat";
+
+  const valueEl = document.createElement("strong");
+  valueEl.className = "stat-value";
+  valueEl.textContent = value;
+
+  const labelEl = document.createElement("span");
+  labelEl.className = "stat-label";
+  labelEl.textContent = label;
+
+  box.append(valueEl, labelEl);
+  return box;
 }
 
 // ---------- Heatmap tooltip ----------
@@ -532,6 +601,7 @@ form.addEventListener("submit", (event) => {
   saveData();
   renderSessions();
   renderHeatmap();
+  renderStats();
 
   minutesInput.value = ""; // keep the date for logging more on the same day
   minutesInput.focus();
@@ -544,4 +614,5 @@ dateInput.value = todayString();
 renderClassOptions();
 renderSessions();
 renderHeatmap();
+renderStats();
 renderClasses();
