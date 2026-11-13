@@ -4,6 +4,9 @@ A small personal study tracker: log how long you studied, see it as a GitHub-sty
 
 **Live version:** https://flohanusch.github.io/study-tracker/
 
+<img width="1914" height="1035" alt="screenshot" src="https://github.com/user-attachments/assets/849aa43a-6581-426e-8488-82e698194b4d" />
+
+
 ![Study Tracker with a heatmap of study time, stats and class cards](screenshot.png)
 
 ## Features
@@ -27,13 +30,3 @@ To run it locally, download or clone the repository and open `index.html` in you
 Everything is stored in your browser's `localStorage`. Nothing is sent to a server, and there is no account.
 
 That also means clearing your browser data deletes your study log, and each browser or device has its own separate data. Use **Export backup** now and then to keep a copy.
-
-## Tech
-
-Plain HTML, CSS and JavaScript. No frameworks, no libraries, no build step.
-
-| File         | Contents                                   |
-| ------------ | ------------------------------------------ |
-| `index.html` | Page structure                             |
-| `style.css`  | All styling, including dark mode           |
-| `app.js`     | All logic: storage, rendering, events      |
