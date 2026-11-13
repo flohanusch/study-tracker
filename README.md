@@ -6,6 +6,7 @@ A small personal study tracker: log how long you studied, see it as a GitHub-sty
 
 <img width="1914" height="1035" alt="screenshot" src="https://github.com/user-attachments/assets/849aa43a-6581-426e-8488-82e698194b4d" />
 
+
 ![Study Tracker with a heatmap of study time, stats and class cards](screenshot.png)
 
 ## Features
